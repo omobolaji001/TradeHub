@@ -1,7 +1,5 @@
 const { DataTypes} = require('sequelize');
-const sequelize = require('./database');
-const User = require('./user');
-const Product = require('./product');
+const sequelize = require('../config/db');
 
 
 const Business = sequelize.define('business', {
@@ -11,7 +9,7 @@ const Business = sequelize.define('business', {
     unique: true,
     primaryKey: true
   },
-  business_name: {
+  businessName: {
     type: DataTypes.STRING,
     allowNull: false
   },
@@ -23,25 +21,12 @@ const Business = sequelize.define('business', {
     type: DataTypes.STRING,
     allowNull: false
   },
-  phone_number: {
+  phoneNumber: {
     type: DataTypes.STRING
   },
-  physical_address: {
+  physicalAddress: {
     type: DataTypes.STRING
-  },
-  created_at: {
-    type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW
-  },
-  updated_at: {
-    type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW
   }
-}, {
-  timestamps: false
 });
-
-Business.belongsToMany(User, {through: 'business_owner'});
-Business.hasMany(Product, {foreignKey: 'business_id'});
 
 module.exports = Business;
