@@ -1,6 +1,5 @@
 const { DataTypes } = require('sequelize');
-const Business = require('./business');
-const sequelize = require('./database');
+const sequelize = require('../config/db');
 
 
 const Product = sequelize.define('product', {
@@ -10,14 +9,14 @@ const Product = sequelize.define('product', {
     unique: true,
     primaryKey: true
   },
-  product_name: {
+  productName: {
     type: DataTypes.STRING,
     allowNull: false
   },
   description: {
     type: DataTypes.STRING,
   },
-  stock_quantity: {
+  stockQuantity: {
     type: DataTypes.INTEGER,
   },
   price: {
@@ -26,17 +25,7 @@ const Product = sequelize.define('product', {
   },
   category: {
     type: DataTypes.STRING
-  },
-  created_at: {
-    type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW
-  },
-  updated_at: {
-    type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW
   }
-}, {
-  timestamps: false
 });
 
 module.exports = Product;
