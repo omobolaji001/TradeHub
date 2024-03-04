@@ -11,12 +11,6 @@ app.use(express.urlencoded({ extended: true }))
 
 
 
-const db = require('./models/database.js');
-// db.sequelize.sync({ force: true }).then(() => {
-//     console.log("Drop and re-sync db.");
-// });
-//db.sequelize.sync();
-
 app.get('/', async (req, res) => {
     res.json({ msg: "You should not be here" })
 })

@@ -1,7 +1,14 @@
-module.exports = {
-    HOST: process.env.MYSQL_HOST,
-    USER: process.env.MYSQL_USER,
-    PASSWORD: process.env.MYSQL_PWD,
-    DB: process.env.MYSQL_DB,
-    DIALECT: process.env.DB_DIALECT,
-};
+const { Sequelize } = require('sequelize');
+
+const dotenv = require('dotenv');
+dotenv.config();
+
+const sequelize = new Sequelize(
+  process.env.MYSQL_DB,
+  process.env.MYSQL_USER,
+  process.env.MYSQL_PWD, {
+  host: process.env.MYSQL_HOST,
+  dialect: 'mysql'
+});
+
+module.exports = sequelize;
