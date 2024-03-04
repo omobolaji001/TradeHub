@@ -18,6 +18,7 @@ app.get('/', async (req, res) => {
 app.use('/users', require('./routes/users.routes.js'))
 
 
+
 const port = process.env.PORT || 8000
 
 app.listen(port, () => {
