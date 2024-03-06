@@ -25,6 +25,10 @@ const Product = sequelize.define('product', {
   },
   category: {
     type: DataTypes.STRING
+  },
+  businessId: {
+    type: DataTypes.INTEGER,
+    allowNull: false
   }
 });
 

@@ -15,7 +15,9 @@ app.get('/', async (req, res) => {
     res.json({ msg: "You should not be here" })
 })
 
-app.use('/users', require('./routes/users.routes.js'))
+app.use('/api/v1/users', require('./routes/users.routes.js'));
+app.use('/api/v1/businesses', require('./routes/businesses.routes.js'));
+app.use('/api/v1/products', require('./routes/products.routes.js'));
 
 
 const port = process.env.PORT || 8000
