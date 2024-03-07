@@ -48,8 +48,7 @@ module.exports = (sequelize, Sequelize) => {
 =======
 const sequelize = require('../config/db');
 
-
-const User = sequelize.define('user',{
+const User = sequelize.define('user', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,

@@ -1,40 +1,37 @@
 const sequelize = require('../config/db');
 const User = require('../models/user');
 exports.home = async (req, res) => {
-    res.status(400).json({
-        msg: 'You have successfully reached TradeHub Users home page'
-    })
-}
+  res.status(400).json({
+    msg: 'You have successfully reached TradeHub Users home page'
+  });
+};
 
-
-const getUsers = ((req, res) => {
+const getUsers = (req, res) => {
   User.findAll().then((data) => {
-    users = [];
+    const users = [];
     data.forEach((user) => {
       users.push(user.toJSON());
-    })
+    });
     res.status(200).json(users);
   }).catch((err) => {
     console.error(err);
-    res.status(500).json({ error: 'Internal server error'});
-  })
-});
+    res.status(500).json({ error: 'Internal server error' });
+  });
+};
 
-
-const getUser = ((req, res) => {
+const getUser = (req, res) => {
   const userId = Number(req.params.userId);
-  User.findOne({where: {id: userId}}).then((user) => {
+  User.findOne({ where: { id: userId } }).then((user) => {
     if (!user) {
-      return res.status(404).json({error: 'Not found'});
+      return res.status(404).json({ error: 'Not found' });
     }
     res.status(200).json(user);
   }).catch((err) => {
     console.error(err);
   });
-});
+};
 
-
-const createUser = ((req, res) => {
+const createUser = (req, res) => {
   const newUser = {
     fullName: req.body.fullName,
     username: req.body.username,
@@ -46,16 +43,15 @@ const createUser = ((req, res) => {
     res.status(201).json(data);
   }).catch((err) => {
     console.log(err);
-    return res.status(500).json({error: 'Internal server error'});
+    return res.status(500).json({ error: 'Internal server error' });
   });
-});
+};
 
-
-const updateUser = ((req, res) => {
+const updateUser = (req, res) => {
   const userId = Number(req.params.userId);
   User.findByPk(userId).then((user) => {
     if (!user) {
-      return res.status(404).json({error: 'Not found'});
+      return res.status(404).json({ error: 'Not found' });
     }
     for (const attr in req.body) {
       if (req.body.hasOwnProperty(attr) && attr !== 'id') {
@@ -65,27 +61,27 @@ const updateUser = ((req, res) => {
     user.save();
     res.status(201).json(user);
   }).catch((err) => {
-    res.status(500).json({error: 'Internal server error'});
+    res.status(500).json({ error: 'Internal server error' });
   });
-});
+};
 
-
-const deleteUser = ((req, res) => {
+const deleteUser = (req, res) => {
   const userId = Number(req.params.userId);
   User.findByPk(userId).then((user) => {
     if (!user) {
-      return res.status(404).json({error: 'Not found'});
+      return res.status(404).json({ error: 'Not found' });
     }
     user.destroy();
     res.status(200).json({});
   }).catch((err) => {
-    res.status(500).json({error: 'Internal server error'});
+    res.status(500).json({ error: 'Internal server error' });
   });
-});
+};
 
-
-module.exports = { getUsers, 
-		   getUser, 
-		   createUser, 
-		   updateUser, 
-		   deleteUser };
+module.exports = {
+  		   getUsers,
+		   getUser,
+		   createUser,
+		   updateUser,
+		   deleteUser
+};
