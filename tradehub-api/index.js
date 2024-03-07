@@ -18,7 +18,12 @@ app.use('/api/v1/businesses', require('./routes/businesses.routes.js'));
 app.use('/api/v1/products', require('./routes/products.routes.js'));
 
 
+
 const port = process.env.PORT || 8000;
+
+
+
+
 
 app.listen(port, () => {
   console.log('listening at port ' + port);
