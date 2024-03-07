@@ -3,9 +3,8 @@ const User = require('./user');
 const Business = require('./business');
 const Product = require('./product');
 
-
-User.belongsToMany(Business, {through: 'business_owner'});
-Business.belongsToMany(User, {through: 'business_owner'});
+User.belongsToMany(Business, { through: 'business_owner' });
+Business.belongsToMany(User, { through: 'business_owner' });
 
 Business.hasMany(Product);
 Product.belongsTo(Business);
