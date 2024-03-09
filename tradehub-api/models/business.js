@@ -1,20 +1,5 @@
-
 const { DataTypes } = require('sequelize');
-
-
-
-
-
-
 const sequelize = require('../config/db');
-
-
-
-
-
-
-
-
 
 
 const Business = sequelize.define('business', {
