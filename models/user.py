@@ -2,6 +2,7 @@
 """Defines the User class"""
 from models.base_model import BaseModel
 from sqlalchemy import Column, String, Boolean
+from sqlalchemy.orm import relationship
 
 
 class User(BaseModel):
@@ -15,3 +16,5 @@ class User(BaseModel):
     username = Column(String(30), unique=True, nllable=False)
     password = Column(String(120), nullable=False)
     is_merchant = Column(Boolean, default=False)
+
+    orders = relationship("Order", backref="customer")
