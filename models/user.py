@@ -18,7 +18,7 @@ class User(Base):
     username = Column(String(30), unique=True, nullable=False)
     hashed_password = Column(String(120), nullable=False)
     reset_token = Column(String(250), nullable=True)
-    is_merchant = Column(Boolean, default=False)
+    role = Column(String(100), nullable=False default='Customer')
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow,
                         onupdate=datetime.utcnow())
