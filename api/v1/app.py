@@ -6,7 +6,8 @@ from flask import Flask, jsonify, render_template, make_response
 from models.engine.db import DB
 from flask_cors import CORS
 from flasgger import Swagger
-from api.v1.views import app_views, auth
+from api.v1.views import app_views
+from api.v1.auth import auth
 
 
 app = Flask(__name__)
