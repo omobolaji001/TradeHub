@@ -59,6 +59,7 @@ class Auth:
             payload = {
                 "user_id": user.id,
                 "email": email,
+                "role": user.role
                 "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)
             }
             token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
