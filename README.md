@@ -1,32 +1,74 @@
 # TradeHub
 
-This repository contains a Flask-based e-commerce web application that allows merchants to list their products and services, and customers to browse and purchase them. The application uses PostgreSQL as the database and provides features for user registration and login, product and service listings, cart management, order placement, and payment processing.
+**TradeHub** is an e-commerce platform where merchants can advertise their products, and customers can browse and purchase items. The platform is built using a Flask API for the backend, PostgreSQL for database management, and React for the frontend interface.
 
-## Key Features:
+## Table of Contents
 
-User authentication and authorization
-Product and service listings
-Cart management
-Order processing
-Payment processing
-Search functionality
-Product reviews and ratings
-Merchant dashboard for managing products and orders
+- [Project Overview](#project-overview)
+- [Tech Stack](#tech-stack)
+- [Features](#features)
+- [Setup Instructions](#setup-instructions)
+- [Environment Variables](#environment-variables)
+- [API Endpoints](#api-endpoints)
+- [Contributing](#contributing)
+- [License](#license)
 
-## Installation:
+## Project Overview
 
-Clone the repository: git clone <repository_url>
-Create a virtual environment: python -m venv venv
-Activate the virtual environment: venv\Scripts\activate (Windows) or source venv/bin/activate (macOS/Linux)   
-Install dependencies: pip install -r requirements.txt
-Create a PostgreSQL database and user with appropriate permissions.
-Configure the database connection in the config.py file.
-Run the application: python app.py
+TradeHub is designed to facilitate seamless interaction between merchants and customers. Merchants can create an account to list and manage their products, while customers can browse, search, and purchase these products. The platform supports a variety of categories and aims to provide a user-friendly experience for both sellers and buyers.
 
-## Usage:
+## Tech Stack
 
-Register as a customer or merchant.
-Browse products and services.
-Add items to your cart and place an order.
-Make a payment using the integrated payment gateway.
-Merchants can log in to their dashboard to manage their products and orders.
+- **Backend**: Flask (Python) API
+- **Frontend**: React (JavaScript) 
+- **Database**: PostgreSQL
+- **ORM**: SQLAlchemy
+- **Authentication**: JWT (JSON Web Tokens)
+- **Styling**: CSS, Material-UI
+- **Deployment**: Docker, Nginx (Optional for production)
+
+## Features
+
+### User (Customer)
+
+- Browse and search products by categories.
+- Add products to the shopping cart.
+- Place orders and view order history.
+- User authentication (login, registration).
+
+### Merchant
+
+- Register and create a merchant account.
+- Add, update, and manage products.
+- View orders from customers.
+- Receive customer feedback.
+
+### Admin
+
+- Monitor users and merchants.
+- Manage platform settings and analytics.
+
+### General
+
+- Secure user authentication using JWT.
+- Responsive design for mobile and desktop.
+- Database schema designed for scalable, multi-user e-commerce.
+
+## Setup Instructions
+
+### Prerequisites
+
+Make sure you have the following installed:
+
+- Python 3.8+
+- Node.js (v14+)
+- PostgreSQL
+- Docker (Optional for production)
+
+### Backend Setup (Flask API)
+
+1. **Clone the repository**:
+
+   ```bash
+   git clone https://github.com/your-username/tradehub.git
+   cd tradehub
