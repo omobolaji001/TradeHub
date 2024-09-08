@@ -17,8 +17,8 @@ class Product(Base):
     description = Column(String(60))
     price = Column(Numeric(precision=10, scale=2), nullable=False)
     image_url = Column(String(30), nullable=False, default='default.jpg')
-    category_id = Column(Integer, ForeignKey('categories.id',
-                         ondelete='SET NULL'), nullable=False)
+    category_id = Column(Integer, ForeignKey('categories.id'),
+                         nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow,
                         onupdate=datetime.utcnow())
