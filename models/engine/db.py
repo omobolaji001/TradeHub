@@ -61,16 +61,6 @@ class DB:
             self.__session = DBSession()
         return self.__session
 
-    def all(self, cls=None):
-        """Retrieves all objects of a class"""
-        new = {}
-        for clss in classes:
-            if cls is None or cls is classes[clss] or cls == clss:
-                objs = self._session.query(classes[clss]).all()
-                for obj in objs:
-                    key = obj.__class__.__name__ + '.' + str(obj.id)
-                    new[key] = obj
-        return new
 
     def new(self, obj):
         """Adds the object to the current database session"""
@@ -92,12 +82,37 @@ class DB:
             return obj
         return None
 
-    def add_user(self, email: str, hashed_password: str) -> User:
+    def add_user(self, **kwargs: str) -> User:
         """Adds new user to database"""
-        user = User(email=email, hashed_password=hashed_password)
-        self._session.add(user)
-        self.save()
-        return user
+        try:
+            user = User(**kwargs)
+            self._session.add(user)
+            self.save()
+            return user
+        raise ValueError(f"User {user.email} already exists")
+
+    def add_merchant(self, user_id, b_name, b_descr):
+        """ Adds a new merchant to database """
+        try:
+            merchant = Merchant(user_id=user_id, business_name=b_name,
+                                business_description=b_descr)
+            self._session.add(merchant)
+            self.save()
+            return merchant
+        raise ValueError(f"merchant already exists")
+
+    def add_customer(self, user_id, phone_number):
+        """ Adds a new customer to the database """
+        try:
+            customer = Customer(user_id=user_id, phone_number=phone_number)
+            self_session.add(customer)
+            self.save()
+            return customer
+        raise ValueError(f"Customer already exists")
+
+    def all(self, cls=None):
+        """ Retrieves all objects of Merchant """
+        return self._session.query(cls).all()
 
     def find_user_by(self, **kwargs) -> User:
         """Finds user by key-word argument"""
