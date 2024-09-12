@@ -3,8 +3,23 @@
 from flask import Flask, request, jsonify, make_response
 from auth import Auth
 from functools import wraps
+import bcrypt
+import uuid
 
 auth = Auth()
+
+
+def hash_password(password):
+    """Hashes a password string and returns it in bytes form
+    """
+    encoded_password = password.encode('utf-8')
+    return bcrypt.hashpw(encoded_password, bcrypt.gensalt())
+
+
+def generate_uuid():
+    """Generates a string of new uuid and returns the string
+    """
+    return str(uuid.uuid4())
 
 
 def token_required(f):
@@ -43,7 +58,7 @@ def authorize(required_role: str):
                 payload = auth.verify_jwt(token)
                 if payload is None:
                     return jsonify({'message': 'Token is invalid!'}), 401
-                
+
                 user_role = payload.get('role')
                 if user_role != required_role:
                     return jsonify({'message': 'You are not authorized to access this route!'}), 403
@@ -53,4 +68,3 @@ def authorize(required_role: str):
             return f(*args, **kwargs)
         return decorated_function
     return decorator
-
