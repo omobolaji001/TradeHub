@@ -18,7 +18,20 @@ class User(Base):
     username = Column(String(30), unique=True, nullable=False)
     hashed_password = Column(String(120), nullable=False)
     reset_token = Column(String(250), nullable=True)
-    role = Column(String(100), nullable=False default='Customer')
+    role = Column(String(100), nullable=False, default='Customer')
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow,
                         onupdate=datetime.utcnow())
+
+    def to_dict(self):
+        """ Returns the instance in dictionary form """
+        return {
+            "id": self.id,
+            "firstname": self.firstname,
+            "lastname": self.lastname,
+            "username": self.username,
+            "email": self.email,
+            "role": self.role,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at
+        }
