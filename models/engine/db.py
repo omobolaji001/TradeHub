@@ -91,6 +91,24 @@ class DB:
             return user
         raise ValueError(f"User {user.email} already exists")
 
+    def update_user(self, user_id, **kwargs: str) -> User:
+        """ Updates existing user in the database """
+        try:
+            user = self.find_user_by(id=user_id)
+        except NoResultFound:
+            raise ValueError
+
+        ignore = ['id', 'firstname', 'lastname', 'username', 'email',
+                  'role', 'created_at', 'updated_at']
+
+        for key, value in kwargs.items():
+            if hasattr(key) and key not in ignore:
+                setattr(user, key, value)
+            else:
+                raise ValueError
+        self.save()
+
+
     def add_merchant(self, user_id, b_name, b_descr):
         """ Adds a new merchant to database """
         try:
@@ -101,10 +119,10 @@ class DB:
             return merchant
         raise ValueError(f"merchant already exists")
 
-    def add_customer(self, user_id, phone_number):
+    def add_customer(self, user_id):
         """ Adds a new customer to the database """
         try:
-            customer = Customer(user_id=user_id, phone_number=phone_number)
+            customer = Customer(user_id=user_id)
             self_session.add(customer)
             self.save()
             return customer
@@ -120,20 +138,6 @@ class DB:
             return self._session.query(User).filter_by(**kwargs).one()
         except NoResultFound:
             raise NoResultFound
-
-    def update_user(self, user_id: int, **kwargs) -> None:
-        """Updates user"""
-        try:
-            user = self.find_user_by(id=user_id)
-        except NoResultFound:
-            raise ValueError("User not found")
-
-        for key, value in kwargs.items():
-            if hasattr(user, key):
-                setattr(user, key, value)
-            else:
-                raise ValueError(f"Attribute {key} not found on User")
-        self.save()
 
     def close(self):
         """Closes the current DB session"""
