@@ -22,8 +22,8 @@ def register_merchant():
     if not data:
         abort(400, description="Not a valid JSON")
 
-    required_fields = ['firstname', 'lastname', 'username',
-                       'email', 'password',
+    required_fields = ['firstname', 'lastname', 'username', 'address',
+                       'email', 'phone_number', 'password',
                        'business_name', 'business_description']
 
     missing_fields = [field for field in required_fields if field not in data]
@@ -36,15 +36,20 @@ def register_merchant():
     lname = data.get('lastname')
     uname = data.get('username')
     email = data.get('email')
+    address = data.get('address')
+    phone = data.get('phone_number')
     role = 'Merchant'
     b_name = data.get('business_name')
     b_description = data.get('business_description')
 
     try:
         user_id = db.add_user(firstname=fname, lastname=lname, username=uname,
-                              email=email, role=role)
+                              email=email, address=address, phone_number=phone,
+                              role=role, hashed_password=hashed_password)
+
         db.add_merchant(user_id=user_id, business_name=b_name,
                         business_description=b_description)
+
         return jsonify({"message": "Merchant registered successfully!"}), 201
     except ValueError:
         return jsonify({"error": "merchant already registered!"}), 400
@@ -62,7 +67,7 @@ def get_merchant(merchant_id):
 
     if not merchant:
         abort(404)
-    return jsonify(merchant.to_dict())
+    return jsonify(merchant.to_dict()), 204
 
 @app_views('/merchants/<merchant_id>', methods=['PUT'], strict_slashes=False)
 def update_merchant(merchant_id):
@@ -79,7 +84,7 @@ def update_merchant(merchant_id):
 
     ignore = [
                 'id', 'email', 'created_at', 'updated_at',
-                'firstname', 'lastname', 'role'
+                'firstname', 'lastname', 'role', 'phone_number'
     ]
 
     for key, value in data.items():
@@ -87,3 +92,17 @@ def update_merchant(merchant_id):
             setattr(merchant, key, value)
     db.save()
     return make_response(jsonify(merchant.to_dict()), 200)
+
+@app_views('/merchants/<merchant_id>', methods=['DELETE'],
+           strict_slashes=False)
+def delete_merchant(merchant_id):
+    """ Deletes a merchat object that matches the merchant_id """
+    merchant = db.get(Merchant, merchant_id)
+
+    if not merchant:
+        abort(404)
+
+    db.delete(merchant)
+    db.save()
+
+    return make_response(jsonify({}), 204)
