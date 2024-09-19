@@ -15,6 +15,17 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # Simple in-memory blacklist. In production, use a database or cache.
 JWT_BLACKLIST = set()
 
+def hash_password(password: str) -> bytes:
+    """Hashes a password string and returns it in bytes form
+    """
+    encoded_password = password.encode('utf-8')
+    return bcrypt.hashpw(encoded_password, bcrypt.gensalt())
+
+
+def generate_uuid() -> str:
+    """Generates a string of new uuid and returns the string
+    """
+    return str(uuid.uuid4())
 
 
 class Auth:
@@ -82,7 +93,7 @@ class Auth:
         """Returns a token to reset the password."""
         try:
             user = self._db.find_user_by(email=email)
-            token = _generate_uuid()
+            token = generate_uuid()
             self._db.update_user(user.id, reset_token=token)
             return user.reset_token
         except NoResultFound:
@@ -92,7 +103,7 @@ class Auth:
         """Updates the user's password."""
         try:
             user = self._db.find_user_by(reset_token=reset_token)
-            hashed_password = _hash_password(password)
+            hashed_password = hash_password(password)
             self._db.update_user(user.id, hashed_password=hashed_password,
                                  reset_token=None)
             return None
