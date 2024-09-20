@@ -88,7 +88,7 @@ class DB:
             user = User(**kwargs)
             self._session.add(user)
             self.save()
-            return user
+            return user.id
         raise ValueError(f"User {user.email} already exists")
 
     def update_user(self, user_id, **kwargs: str) -> User:
