@@ -27,7 +27,7 @@ class User(Base):
 
     merchant = relationship('Merchant', backref='user', cascade='all, delete',
                             uselist=False, passive_deletes=True)
-    customer = relationship('Customer', backref='user', cascadee='all, delete',
+    customer = relationship('Customer', backref='user', cascade='all, delete',
                             uselist=False, passive_deletes=True)
 
     def to_dict(self):
