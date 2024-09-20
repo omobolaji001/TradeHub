@@ -26,33 +26,33 @@ def register_merchant():
                        'email', 'phone_number', 'password',
                        'business_name', 'business_description']
 
-    missing_fields = [field for field in required_fields if field not in data]
+    missing = [field for field in required_fields if field not in data]
 
-    if missing_fields:
-        return jsonify({"error": f"Missing fields: {', '.join(missing_fields)}"}), 400)
+    if missing:
+        return jsonify({"error": f"Missing fields: {', '.join(missing)}"}), 400)
 
-    hashed_password = hash_password(data.get('password'))
-    fname = data.get('firstname')
-    lname = data.get('lastname')
-    uname = data.get('username')
-    email = data.get('email')
-    address = data.get('address')
-    phone = data.get('phone_number')
-    role = 'Merchant'
-    b_name = data.get('business_name')
-    b_description = data.get('business_description')
+    existing_mail = db.find_user_by(email=data.get("email"))
+    if existing_mail:
+        abort(409, description="User with this email already exists")
+
+    existing_username = db.find_user_by(username=data.get("username"))
+    if existing_username:
+        abort(409, description="username already exists")
+
+    data["password"] = hash_password(data.get("password"))
+
+    business_name = data.pop("business_name")
+    business_description = data.pop("business_description")
 
     try:
-        user_id = db.add_user(firstname=fname, lastname=lname, username=uname,
-                              email=email, address=address, phone_number=phone,
-                              role=role, hashed_password=hashed_password)
+        user_id = db.add_user(role="Merchant", **data)
 
         db.add_merchant(user_id=user_id, business_name=b_name,
                         business_description=b_description)
 
         return jsonify({"message": "Merchant registered successfully!"}), 201
-    except ValueError:
-        return jsonify({"error": "merchant already registered!"}), 400
+    except Exception:
+        abort(500)
 
 @app_views('/merchants', methods=['GET'], strict_slashes=False)
 def all_merchants():
@@ -77,21 +77,21 @@ def update_merchant(merchant_id):
     if not merchant:
         abort(404)
 
+    user_id = merchant.user_id
+
     data = request.get_json()
 
     if not data:
         abort(400, description="Not a valid JSON")
 
-    ignore = [
-                'id', 'email', 'created_at', 'updated_at',
-                'firstname', 'lastname', 'role', 'phone_number'
-    ]
+    if business_name and business_description in data.keys():
+        b_name = data.pop("business_name")
+        b_descr = data.pop("business_description")
+        setattr(merchant, business_name=b_name, business_description=b_descr)
 
-    for key, value in data.items():
-        if key not in ignore:
-            setattr(merchant, key, value)
+    db.update_user(user_id, **data)
     db.save()
-    return make_response(jsonify(merchant.to_dict()), 200)
+    return jsonify({"message": "Merchant updated successfully"}), 200
 
 @app_views('/merchants/<merchant_id>', methods=['DELETE'],
            strict_slashes=False)
