@@ -30,21 +30,6 @@ def get_user(user_id):
         abort(404)
     return jsonify(user.to_dict())
 
-@app_views('/users/<user_id>', methods=['PUT'], strict_slashes=False)
-def update_user(user_id):
-    """ Updates a user object that matches the merchant_id """
-    data = request.get_json()
-
-    if not data:
-        abort(400, description="Not a valid JSON")
-
-    try:
-        user = db.update_user(**data)
-    except ValueError:
-        abort(404)
-
-    return make_response(jsonify(user.to_dict()), 200)
-
 @app_views('/users/<user_id>', methods=['DELETE'],
            strict_slashes=False)
 def delete_user(user_id):
