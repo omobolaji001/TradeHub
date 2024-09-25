@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Defines the Customer class"""
 from models.base import Base
-from sqlalchemy import Column, String, Integer, ForeignKey, DateTime
+from sqlalchemy import (
+    Column, String, Integer, ForeignKey,
+    DateTime, relationship
+)
 from datetime import datetime
 
 class Customer(Base):
@@ -15,6 +18,9 @@ class Customer(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow,
                         onupdate=datetime.utcnow())
+
+    orders = relationship('Order', backref='customer',
+                          cascade='all, delete, delete-orphan')
 
     def to_dict(self):
         """ Returns User data in dictionary format """
