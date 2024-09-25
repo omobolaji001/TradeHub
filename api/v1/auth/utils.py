@@ -35,8 +35,12 @@ def token_required(f):
             # 'Bearer token'
             token = token.split(" ")[1]
             data = auth.verify_jwt(token)
+
             if data is None:
                 return jsonify({'message': 'Token is invalid!'}), 401
+
+            g.user_id = data["user_id"]
+
         except Exception as e:
             return jsonify({'message': 'Token is invalid!'}), 401
 
