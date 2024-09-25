@@ -75,6 +75,10 @@ class DB:
         if obj is not None:
             self._session.delete(obj)
 
+    def flush(self):
+        """ Sends pending changes to the database """
+        self._session.flush()
+
     def get(self, cls, id):
         """Retrieves an object from the database by id"""
         if cls is not None and id is not None:
