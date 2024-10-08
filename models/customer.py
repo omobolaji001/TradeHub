@@ -2,9 +2,10 @@
 """Defines the Customer class"""
 from models.base import Base
 from sqlalchemy import (
-    Column, String, Integer, ForeignKey,
-    DateTime, relationship
+    Column, String, Integer,
+    ForeignKey, DateTime
 )
+from sqlalchemy.orm import relationship
 from datetime import datetime
 
 class Customer(Base):
