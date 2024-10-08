@@ -4,8 +4,9 @@
 from models.base import Base
 from sqlalchemy import (
     Column, Integer, DateTime, Numeric,
-    String, ForeignKey, relationship
+    String, ForeignKey
 )
+from sqlalchemy.orm import relationship
 from datetime import datetime
 
 
