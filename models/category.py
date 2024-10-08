@@ -19,3 +19,12 @@ class Category(Base):
                         onupdate=datetime.utcnow())
 
     products = relationship("Product", backref="category")
+
+    def to_dict(self):
+        """ Dictionary representation """
+        return {
+            "id": self.id,
+            "name": self.name,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at
+        }
