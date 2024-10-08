@@ -79,13 +79,6 @@ class DB:
         """ Sends pending changes to the database """
         self._session.flush()
 
-    def get(self, cls, id):
-        """Retrieves an object from the database by id"""
-        if cls is not None and id is not None:
-            obj = self._session.get(cls, id)
-            return obj
-        return None
-
     def add_user(self, **kwargs: str) -> User:
         """Adds new user to database"""
         try:
@@ -93,7 +86,8 @@ class DB:
             self._session.add(user)
             self.save()
             return user.id
-        raise ValueError(f"User {user.email} already exists")
+        except Exception:
+            raise ValueError(f"User {user.email} already exists")
 
     def update_user(self, user_id, **kwargs: str) -> User:
         """ Updates existing user in the database """
@@ -115,22 +109,30 @@ class DB:
 
     def add_merchant(self, user_id, b_name, b_descr):
         """ Adds a new merchant to database """
-        try:
+        existing_merchant = Merchant.query.filter_by(user_id=user_id)
+
+        if existing_merchant:
+            raise ValueError("Merchant already exist")
+
+        else:
             merchant = Merchant(user_id=user_id, business_name=b_name,
                                 business_description=b_descr)
             self._session.add(merchant)
             self.save()
             return merchant
-        raise ValueError(f"merchant already exists")
 
     def add_customer(self, user_id):
         """ Adds a new customer to the database """
-        try:
+        customer = Customer.query.filter_by(user_id=user_id)
+
+        if customer:
+            raise ValueError("Customer already exists")
+
+        else:
             customer = Customer(user_id=user_id)
             self_session.add(customer)
             self.save()
             return customer
-        raise ValueError(f"Customer already exists")
 
     def all(self, cls=None):
         """ Retrieves all objects of Merchant """
