@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 """Defines Cart item model
 """
-from models.base import Base
-from sqlalchemy import Column, Integer, ForeignKey, DateTime
+from models.base import Base, BaseModel
+from sqlalchemy import Column, String, Integer, ForeignKey
+from sqlalchemy.orm import relationship
 from datetime import datetime
 
 
-class CartItem(Base):
+class CartItem(BaseModel, Base):
     """Represents a Cart item
     """
     __tablename__ = 'cart_items'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    cart_id = Column(Integer, ForeignKey('carts.id', ondelete='CASCADE'),
-                     nullable=False)
-    product_id = Column(Integer, ForeignKey('products.id'), nullable=False)
+    cart_id = Column(String(60), ForeignKey('carts.id'), nullable=False)
+    product_id = Column(String(60), ForeignKey('products.id'), nullable=False)
     quantity = Column(Integer, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow,
-                        onupdate=datetime.utcnow())
+
+    def __init__(self, *args, **kwargs):
+        """ Initialize the instance """
+        super().__init__(*args, **kwargs)
