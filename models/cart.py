@@ -1,22 +1,23 @@
 #!/usr/bin/env python3
 """Defines the Cart model
 """
-from models.base import Base
-from sqlalchemy import Column, Integer, ForeignKey, DateTime
+from models.base import Base, BaseModel
+from sqlalchemy import Column, String, Float, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
 
-class Cart(Base):
+class Cart(BaseModel, Base):
     """Represents a Cart
     """
     __tablename__ = 'carts'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    customer_id = Column(Integer, ForeignKey('customers.id'), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow,
-                        onupdate=datetime.utcnow())
+    customer_id = Column(String(60), ForeignKey('users.id'), nullable=False)
+    total_amount = Column(Float, default=0.0)
 
     items = relationship("CartItem", backref="cart",
-                         cascade='all, delete-orphan', passive_deletes=True)
+                         cascade='all, delete-orphan')
+
+    def __init__(self, *args, **kwargs):
+        """ Initializes the cart instance """
+        super().__init__(*args, **kwargs)
