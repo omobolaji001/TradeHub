@@ -21,7 +21,7 @@ TradeHub is designed to facilitate seamless interaction between merchants and cu
 
 - **Backend**: Flask (Python) API
 - **Frontend**: React (JavaScript) 
-- **Database**: PostgreSQL
+- **Database**: MySQL
 - **ORM**: SQLAlchemy
 - **Authentication**: JWT (JSON Web Tokens)
 - **Styling**: CSS, Material-UI
