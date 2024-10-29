@@ -1,41 +1,26 @@
 #!/usr/bin/env python3
 """Defines the Order model
 """
-from models.base import Base
-from sqlalchemy import (
-    Column, Integer, DateTime, Numeric,
-    String, ForeignKey
-)
+from models.base import Base, BaseModel
+from sqlalchemy import Column, Float, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
 
-class Order(Base):
+class Order(BaseModel, Base):
     """Represents an Order
     """
     __tablename__ = 'orders'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    customer_id = Column(Integer, ForeignKey('customers.id'), nullable=False)
+    customer_id = Column(String(60), ForeignKey('users.id'), nullable=False)
     order_date = Column(DateTime, nullable=False, default=datetime.utcnow)
-    total_amount = Column(Numeric(12, 2), nullable=False, default=0.00)
-    shipping_address = Column(String(300), nullable=False)
-    status = Column(String(30), default='pending')
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow,
-                        onupdate=datetime.utcnow())
+    total_amount = Column(Float, nullable=False, default=0.0)
+    status = Column(String(20), nullable=False, default="Pending")
 
+
+    shipment = relationship("Shipment", backref="order", uselist=False)
     items = relationship("OrderItem", backref="order")
 
-    def to_dict(self):
-        """ Returns a dictionary representation of the object """
-        return {
-            "id": self.id,
-            "user_id": self.id,
-            "order_date": self.order_date,
-            "total_amount": self.total_amount,
-            "shipping_address": self.shipping_address,
-            "status": self.status,
-            "created_at": self.created_at,
-            "updated_at": self.updated_at
-        }
+    def __init__(self, *args, **kwargs):
+        """ Initialize the order instance """
+        super().__init__(*args, **kwargs)
