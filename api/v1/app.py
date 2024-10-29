@@ -3,16 +3,26 @@
 """
 import os
 from flask import Flask, jsonify, render_template, make_response
-from models.engine.db import DB
+from flask_jwt_extended import JWTManager
+from models import storage
 from flask_cors import CORS
 from flasgger import Swagger
-from api.v1.views import app_views
-from api.v1.auth import auth
+from datetime import timedelta
+from api.v1.views import app_views, auth
+from dotenv import load_dotenv
 
+# Load environment variales from .env file
+load_dotenv()
 
+# app setup
 app = Flask(__name__)
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
+app.config['JWT_SECRET_KEY'] = os.getenv("SECRET_KEY")
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=2)
+app.config['JWT_TOKEN_LOCATION'] = ['cookies']
+app.config['JWT_COOKIE_SECURE'] = False
 
+jwt = JWTManager(app)
 app.register_blueprint(app_views)
 app.register_blueprint(auth)
 
@@ -21,9 +31,8 @@ cors = CORS(app, resources={r'api/v1/*': {'origins': '*'}})
 
 @app.teardown_appcontext
 def close_db(error):
-    """Close Database
-    """
-    DB.close()
+    """ Close Database """
+    db.close()
 
 @app.errorhandler(404)
 def page_not_found(error):
