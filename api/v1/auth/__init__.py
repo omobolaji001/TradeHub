@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
 """ Blueprint for Authentication """
-from flask import Blueprint
-
-auth = Blueprint('auth', __name__, url_prefix='/auth')
+from api.v1.auth.auth import AUTH
+auth_instance = AUTH()

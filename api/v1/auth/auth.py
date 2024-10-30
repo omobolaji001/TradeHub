@@ -1,111 +1,76 @@
 #!/usr/bin/env python3
-import bcrypt
-import uuid
-import jwt
-import datetime
-import os
-from dotenv import load_dotenv
-from typing import Union
+""" AUTH class """
+from models import storage
+from flask import jsonify, make_response
+from werkzeug.security import generate_password_hash, check_password_hash
 from models.user import User
-from models.engine.db import DB
-from sqlalchemy.orm.exc import NoResultFound
-
-load_dotenv()
-SECRET_KEY = os.getenv('SECRET_KEY')
-# Simple in-memory blacklist. In production, use a database or cache.
-JWT_BLACKLIST = set()
-
-def hash_password(password: str) -> bytes:
-    """Hashes a password string and returns it in bytes form
-    """
-    encoded_password = password.encode('utf-8')
-    return bcrypt.hashpw(encoded_password, bcrypt.gensalt())
+import uuid
 
 
-def generate_uuid() -> str:
-    """Generates a string of new uuid and returns the string
-    """
+def generate_uuid():
+    """ Generates a string of uuid and returns a string """
     return str(uuid.uuid4())
 
+class AUTH:
+    """ AUTH class handles the authentication of users """
 
-class Auth:
-    """Auth class to interact with the authentication system."""
+    def __init__(self, token_expiry_hours=2):
+        """Initialize the AUTH class with token expiry time in hours."""
+        self.token_expiry_hours = token_expiry_hours
 
-    def __init__(self):
-        self._db = DB()
+    def hash_password(self, password):
+        """ Hashes the password string """
+        return generate_password_hash(password)
 
-    def valid_login(self, email: str, password: str) -> bool:
-        """Validates user credentials."""
-        try:
-            user = self._db.find_user_by(email=email)
-            encoded_password = password.encode('utf-8')
-            return bcrypt.checkpw(encoded_password, user.hashed_password)
-        except Exception:
-            return False
+    def check_password(self, hashed_password, password):
+        """ Checks if the password is the same with the hashed password """
+        return check_password_hash(hashed_password, password)
 
-    def generate_jwt(self, email: str) -> str:
-        """Generates a JWT token for the user."""
-        try:
-            user = self._db.find_user_by(email=email)
-            payload = {
-                "user_id": user.id,
-                "email": email,
-                "role": user.role
-                "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)
-            }
-            token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
-            return token
-        except Exception:
-            return None
+    def register_user(self, **data):
+        """Register a new user and assign a role."""
 
-    def verify_jwt(self, token: str) -> Union[dict, None]:
-        """ Verifies the JWT token and returns the payload if valid,
-        or None if invalid.
-        """
-        try:
-            # Check if the token is in the blacklist
-            if token in JWT_BLACKLIST:
-                return None
+        data['password'] = self.hash_password(data.get('password'))
+        user = User(**data)
+        user.save()
 
-            payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-            return payload
-        except jwt.ExpiredSignatureError:
-            return None
-        except jwt.InvalidTokenError:
-            return None
+        return jsonify({"msg": "User registered successfully"}), 201
 
-    def get_user_from_jwt(self, token: str) -> Union[User, None]:
-        """Retrieves the user based on the JWT token."""
-        payload = self.verify_jwt(token)
-        if payload:
-            try:
-                user = self._db.find_user_by(id=payload["user_id"])
-                return user
-            except NoResultFound:
-                return None
+    def login_user(self, username, password):
+        """Authenticate user, return JWT token with role."""
+        user = storage.get_by(username=username, password=password)
+
+        if not user or not self.check_password(user["password"], password):
+            return make_response(jsonify({"msg": "Invalid username or password"}), 401)
+
+        # Create JWT token with the user role
+        access_token = create_access_token(identity=user.id,
+                                           additional_claims={"role": user.role},
+                                           expires_delta=timedelta(hours=self.token_expiry_hours))
+
+        # Set JWT token in cookie
+        response = {"msg": "Login successful"}
+        response_object = make_response(jsonify(response), 200)
+        set_access_cookies(response_object, access_token)
+        return response_object
+
+    def get_reset_password_token(self, email):
+        """ returns a token to reset password """
+        user = storage.get_by(email=email)
+        if not user:
+            abort(404)
+
+        token = generate_uuid()
+        setattr(user, 'reset_token', token)
+
+        return user.reset_token
+
+    def update_password(self, reset_token, password):
+        """ update user password """
+        user = storage.get_by(reset_token=reset_token)
+        if not user:
+            abort(404)
+
+        hashed_password = self.hash_password(password)
+        setattr(user, 'password', hashed_password)
+
         return None
-
-    def logout(self, token: str) -> None:
-        """Logs the user out by adding the token to the blacklist."""
-        JWT_BLACKLIST.add(token)  # Add token to the blacklist
-
-    def get_reset_password_token(self, email: str) -> str:
-        """Returns a token to reset the password."""
-        try:
-            user = self._db.find_user_by(email=email)
-            token = generate_uuid()
-            self._db.update_user(user.id, reset_token=token)
-            return user.reset_token
-        except NoResultFound:
-            raise ValueError
-
-    def update_password(self, reset_token: str, password: str) -> None:
-        """Updates the user's password."""
-        try:
-            user = self._db.find_user_by(reset_token=reset_token)
-            hashed_password = hash_password(password)
-            self._db.update_user(user.id, hashed_password=hashed_password,
-                                 reset_token=None)
-            return None
-        except Exception:
-            raise ValueError

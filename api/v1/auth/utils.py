@@ -1,51 +1,9 @@
 #!/usr/bin/env python3
 """ Helper functions """
 from flask import Flask, request, jsonify, make_response
-from auth import Auth
+from api.v1.auth import auth_instance
 from functools import wraps
-import bcrypt
-import uuid
 
-auth = Auth()
-
-
-def hash_password(password):
-    """Hashes a password string and returns it in bytes form
-    """
-    encoded_password = password.encode('utf-8')
-    return bcrypt.hashpw(encoded_password, bcrypt.gensalt())
-
-
-def generate_uuid():
-    """Generates a string of new uuid and returns the string
-    """
-    return str(uuid.uuid4())
-
-
-def token_required(f):
-    """Decorator to check if the JWT token is valid."""
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        # Get token from header
-        token = request.headers.get('Authorization')
-        if not token:
-            return jsonify({'message': 'Token is missing!'}), 401
-
-        try:
-            # 'Bearer token'
-            token = token.split(" ")[1]
-            data = auth.verify_jwt(token)
-
-            if data is None:
-                return jsonify({'message': 'Token is invalid!'}), 401
-
-            g.user_id = data["user_id"]
-
-        except Exception as e:
-            return jsonify({'message': 'Token is invalid!'}), 401
-
-        return f(*args, **kwargs)
-    return decorated
 
 
 def authorize(required_role: str):
