@@ -2,40 +2,34 @@
 """ Routes for order functionalities """
 from models.cart import Cart
 from models.cart_item import CartItem
-from models.customer import Customer
-from models import db
+from models.user import User
+from models import storage
 from flask import request, abort, jsonify
-from api.views import app_views
-from api.v1.auth.utils import (
-    authorize, token_required
-)
+from flask_jwt_extended import get_jwt_identity, jwt_required
+from api.v1.views import app_views
+from api.v1.auth.utils import authorize
 
 
-@app_views('/cart/items', methods=['POST'], strict_slashes=False)
-@token_required
+@app_views.route('/cart/items', methods=['POST'], strict_slashes=False)
+@jwt_required()
 def add_item_to_cart():
     """ Adds new item to cart """
-    user_id = g.user_id
+    user_id = get_jwt_identity()
+
     data = request.get_json()
 
     if not data:
-        abort(400, description="Not a valid JSON")
+        return jsonify({"error": "Not a valid JSON"}), 400
 
     product_id = data.get("product_id")
     quantity = data.get("quantity", 1)
 
-    customer = Customer.query.filter_by(user_id=user_id).first()
-    if customer:
-        customer_id = customer.id
-
-    cart = Cart.query.filter_by(customer_id=customer_id).first()
+    cart = storage.get_by(Cart, customer_id=user_id)
     if not cart:
-        cart = Cart(customer_id=customer_id)
-        db.new(cart)
-        db.save()
+        cart = Cart(customer_id=user_id)
+        cart.save()
 
-    cart_itemn = CartItem.query.filter_by(cart_id=cart.id,
-                                          product_id=product_id).first()
+    cart_item = storage.get_by(cart_id=cart.id, product_id=product_id)
     if cart_item:
         # Update the quantity if item already exists
         cart_item.quantity += quantity
@@ -43,22 +37,21 @@ def add_item_to_cart():
         # Add the item to cart
         new_cart_item = CartItem(cart_id=cart.id, product_id=product_id,
                                  quantity=quantity)
-        db.new(new_cart_item)
+        storage.new(new_cart_item)
 
     # Commit changes to database
-    db.save()
+    storage.save()
 
     return jsonify({"message": "Item added to cart successfully"}), 201
 
     
-@app_views('/cart', methods=['GET'], strict_slashes=False)
-@token_required
+@app_views.route('/cart', methods=['GET'], strict_slashes=False)
+@jwt_required()
 def get_cart_items():
     """ Retrieves all items in a cart """
-    user_id = g.user_id
-    customer = Customer.query.filter_by(user_id=user_id).first()
+    user_id = get_jwt_identity()
 
-    cart = Cart.query.filter_by(customer_id=customer.id).first()
+    cart = storage.get_by(Cart, customer_id=user_id)
     if not cart:
         return jsonify({"message": "Cart is empty"}), 200
 
@@ -73,65 +66,64 @@ def get_cart_items():
         abort(500)
 
 
-@app_views('/cart/items/<int:item_id>', methods=['PUT'], strict_slashes=False)
-@token_required
+@app_views.route('/cart/items/<item_id>', methods=['PUT'], strict_slashes=False)
+@jwt_required()
 def update_cart_item(item_id):
     """ Update the quantity of a cart item """
+    user_id = get_jwt_identity()
+
     data = request.get_json()
     quantity = data.get("quantity")
 
-    if not quantity or quantity <= 0:
+    if quantity is None or quantity <= 0:
         return jsonify({"error": "Invalid quantity"}), 400
 
-    user_id = g.user_id
-    customer = Cutomer.query.filter_by(user_id=user_id).first()
-    customer_id = customer.id
+    cart = storage.get_by(Cart, customer_id=user_id)
 
-    cart_item = CartItem.query.join(Cart).filter(CartItem.id==item_id,
-                                                 Cart.customer_id==customer_id).first()
-    if not cart_item:
-        abort(404)
-
-    cart_item.quantity = quantity
-    db.save()
+    for item in cart.items:
+        if item.id == item_id:
+            item.quantity = quantity
+            item.save()
         
-    return jsonify({
-        "message": "Cart item updated successfully",
-        "item": cart_item.to_dict()
-    }), 200
+            return jsonify({
+                "message": "Cart item updated successfully",
+                "item": item.to_dict()
+            }), 200
+
+    return jsonify({"error": "Item not found"}), 404
 
 
-@app_views('/cart/items/<int:item_id>', methods=['DELETE'], strict_slashes=False)
-@token_required
+@app_views.route('/cart/items/<item_id>', methods=['DELETE'], strict_slashes=False)
+@jwt_required()
 def remove_cart_item(item_id):
     """ Remove an item from cart """
-    user_id = g.user_id
-    customer = Customer.query.filter_by(user_id=user_id).first()
-    customer_id = customer.id
+    user_id = get_jwt_identity()
 
-    cart_item = CartItem.query.join(Cart).filter(CartItem.id==item_id,
-                                                 Cart.customer_id==customer_id).first()
-    if not cart_item:
-        abort(404)
+    cart = storage.get_by(Cart, customer_id=user_id)
 
-    db.delete(cart_item)
-    db.save()
-    
-    return jsonify({"message": "Item removed successfully"}), 200
+    for item in cart.items:
+        if item.id == item_id:
+            storage.delete(item)
+            storage.save()
+
+            return jsonify({"message": "Item removed successfully"}), 200
+
+    return jsonify({"error": "Item not found"}), 404
 
 
-@app_views('/cart/clear', methods=['DELETE'], strict_slashes=False)
-@token_required
+@app_views.route('/cart/clear', methods=['DELETE'], strict_slashes=False)
+@jwt_required()
 def clear_cart():
     """ Removes all items from cart """
-    user_id = g.user_id
-    customer = Customer.query.filter_by(user_id=user_id).first()
+    user_id = get_jwt_identity()
 
-    cart = Cart.query.filter_by(customer_id=customer.id).first()
+    cart = storage.get_by(Cart, customer_id=user_id)
+
     if not cart:
         return jsonify({"message": "Cart is already empty"}), 200
 
-    CartItem.query.filter_by(cart_id=cart.id).delete()
-    db.save()
+    for item in cart.items:
+        storage.delete(item)
+    storage.save()
 
     return jsonify({"message": "Cart cleared successfully"}), 200
