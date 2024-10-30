@@ -2,159 +2,154 @@
 """ Routes for order functionalities """
 from models.order import Order
 from models.order_item import OrderItem
-from models.customer import Customer
-from models.engine.db import DB
+from models import storage
+from models.user import User
 from flask import request, abort, jsonify
-from api.views import app_views
-from api.v1.auth.utils import (
-    authorize, token_required
-)
-from api.v1.views.helper import get_product_price
-
-db = DB()
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from api.v1.views import app_views
+from api.v1.auth.utils import authorize
+from api.v1.services import process_checkout
 
 
-@app_views('/orders', methods=['GET'], strict_slashes=False)
-@token_required
-def create_order():
+@app_views.route('/checkout', methods=['POST'], strict_slashes=False)
+@jwt_required()
+def checkout():
     """ Creates new order """
-    user_id = g.user_id
+    user_id = get_jwt_identity()
+
     data = request.get_json()
-    items = data.get("items")
+
     shipping_address = data.get("shipping_address")
-
-    if not shipping_address or not items:
-        return jsonify({"error": "Shipping address and items are required"}), 400
-
-    customer = Customer.query.filter_by(user_id=user_id).first()
-    if customer:
-        customer_id = customer.id
+    shipping_cost = data.get("shipping_cost")
+    date = data.get("order_date")
+    
+    if not shipping_address or not all(key in shipping_address for key in ('street', 'city', 'state', 'zip_code')):
+        return jsonify({"error": "Invalid shipping address"}), 400
 
     try:
-        # Create new order in the database
-        new_order = Order(customer_id=customer_id)
-        db.new(new_order)
+        result = process_checkout(user_id, shipping_address, shipping_cost, date)
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
-        # Save the new order temporarily without commiting to database
-        # to get the order id
-        db.flush()
-    except Exception:
-        return jsonify({"error": "Error while creating order"}), 500
-
-    total_amount = 0.00
-    order_items = []
-    for item in items:
-        product_id = item.get("product_id")
-        quantity = item.get("quantity", 1)
-
-        if not product_id or quantity <= 0:
-            return jsonify({"error": "Invalid product ID or quantity"}), 400
-
-        # Get the price of the product
-        price_per_item = get_product_price(product_id)
-
-        if price_per_item is None:
-            return jsonify({"error": f"No product with product ID {product_id} is found"}), 404
-
-        # Calculate the total amount of the order
-        total_amount += price_per_item * quantity
-
-        # Create an OrderItem object
-        order_item = OrderItem(
-            order_id=new_order.id,
-            product_id=product_id,
-            quantity=quantity,
-            price_per_item=price_per_item
-        )
-
-        db.new(order_item)
-        order_items.append(order_item)
-
-    # Update the total amount of the new order created
-    new_order.total_amount = total_amount
-
-    # Commit changes to database
-    db.save()
-
-    return jsonify({
-        "message": "Order created successfully",
-        "order_id": new_order.id,
-        "total_amount": new_order.total_amount,
-        "order_items": [item.to_dict() for item in order_items]
-    }), 201
-
-    
-@app_views('/orders', methods=['GET'], strict_slashes=False)
-@token_required
+@app_views.route('/orders', methods=['GET'], strict_slashes=False)
+@jwt_required()
 def get_orders():
     """ Retrieves all orders of a customer """
-    user_id = g.user_id
-    customer = Customer.query.filter_by(user_id=user_id).first()
+    user_id = get_jwt_identity()
+
+    user = storage.get_by(User, id=user_id)
 
     try:
-        orders = customer.orders
+        orders = user.orders
         return jsonify([order.to_dict() for order in orders]), 200
     except Exception:
-        abort(404)
+        abort(404, description="No orders found for this user")
 
 
-@app_views('/orders/<order_id>', methods=['GET'], strict_slashes=False)
-@token_required
+@app_views.route('/orders/<order_id>', methods=['GET'], strict_slashes=False)
+@jwt_required()
 def get_order(order_id):
     """ Retrieves a specific order """
-    user_id = g.user_id
-    customer = Customer.query.filter_by(user_id=user_id).first()
-    customer_id = customer.id
+    user_id = get_jwt_identity()
 
     try:
-        order = Order.query.filter_by(id=order_id,
-                                      customer_id=customer_id).first()
+        order = storage.get_by(Order, id=order_id, customer_id=user_id)
         return jsonify(order.to_dict()), 200
     except Exception:
         abort(404)
 
 
-@app_views('/orders/<order_id>', methods=['PUT'], strict_slashes=False)
-@token_required
+@app_views.route('/orders/<order_id>', methods=['PUT'], strict_slashes=False)
+@jwt_required()
 def update_order(order_id):
-    """ Update order """
+    """ Update order status"""
     data = request.get_json()
     new_status = data.get("status")
 
-    if not new_status:
-        return jsonify({"error": "Order status is required"}), 400
+    valid_status = ["Pending", "Confirmed", "Shipped", "Canceled", "Delivered"]
+    if new_status not in valid_status:
+        return jsonify({"error": "Invalid order status"}), 400
 
-    user_id = g.user_id
-    customer = Cutomer.query.filter_by(user_id=user_id).first()
-    customer_id = customer.id
+    user_id = get_jwt_identity()
 
     try:
-        order = Order.query.filter_by(id=order_id,
-                                      customer_id=customer_id).first()
+        order = storage.get_by(Order, id=order_id, customer_id=user_id)
         order.status = new_status
-        db.save()
-        
+        order.save()
+
         return jsonify({
-            "message": "Order status updated successfully",
+            "message": f"Order status updated to {new_status}",
             "order": order.to_dict()
         }), 200
     except Exception:
         abort(404)
 
 
-@app_views('/orders/<order_id>', methods=['DELETE'], strict_slashes=False)
-@token_required
+@app_views.route('/orders/<order_id>', methods=['DELETE'], strict_slashes=False)
+@jwt_required()
 def cancel_order(order_id):
     """ Cancles an order """
-    user_id = g.user_id
-    customer = Customer.query.filter_by(user_id=user_id).first()
-    customer_id = customer.id
+    user_id = get_jwt_identity()
 
     try:
-        order = Order.query.filter_by(id=order_id,
-                                      customer_id=customer_id).first()
-        db.delete(order)
-        db.save()
+        order = storage.get_by(Order, id=order_id, customer_id=user_id)
+        storage.delete(order)
+        storage.save()
         return jsonify({"message": "Order cancelled successfully"}), 200
     except Exception:
         abort(404)
+
+@app_views.route('/shipments/<order_id>', methods=['GET'], strict_slashes=False)
+@jwt_required()
+def get_shipment(order_id):
+    """ Retrieve Shipment information """
+    user_id = get_jwt_identity()
+
+    order = storage.get_by(Order, customer_id=user_id, id=order_id)
+    if not order:
+        return jsonify({"error": "Order not found"}), 404
+
+    if not order.shipment:
+        return jsonify({"error": "Shipment not found"}), 404
+
+    shipment = order.shipment
+    return jsonify(shipment.to_dict()), 200
+
+@app_views.route('/shipments/<order_id>', methods=['PUT'], strict_slashes=False)
+@jwt_required()
+def update_shipment_status(order_id):
+    """ Updates shipment status """
+    user_id = get_jwt_identity()
+
+    order = storage.get_by(Order, id=order_id, customer_id=user_id)
+    if not order:
+        return jsonify({"error": "Order not found"}), 404
+
+    shipment = order.shipment
+    if not shipment:
+        return jsonify({"error": "Shipment not found"}), 404
+
+    valid_status = ["Pending", "Shipped", "Delivered"]
+
+    data = request.get_json()
+    new_status = data.get("status")
+    tracking_number = data.get("tracking_number")
+
+    # Validate input
+    if not new_status or not tracking_number:
+        return jsonify({"error": "Missing status or tracking number"}), 400
+
+    if new_status not in valid_status:
+        return jsonify({"error": f"Invalid shipment status"}), 404
+
+    shipment.status = new_status
+    shipment.tracking_number = tracking_number
+    shipment.save()
+
+    return jsonify({
+        "message": "Shipment status updated successfully",
+        "shipment_id": shipment.id,
+        "status": shipment.status,
+        "tracking_number": shipment.tracking_number
+    }), 200
