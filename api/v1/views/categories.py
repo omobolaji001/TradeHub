@@ -1,87 +1,93 @@
 #!/usr/bin/env python3
 """ Routes for Category functionalities """
 from models.category import Category
-from models import db
+from models import storage
 from flask import jsonify, abort, request, make_response
 from api.v1.views import app_views
-from api.v1.auth.utils import (
-    authenticate, token_required
-)
+from api.v1.auth.utils import authorize
+from flask_jwt_extended import jwt_required
 
 
-@app_views('/categories', methods=['POST'], strict_slashes=False)
+@app_views.route('/categories', methods=['POST'], strict_slashes=False)
+@jwt_required()
 def create_category():
     """ Creates a new category for products """
     data = request.get_json()
 
     if not data:
-        abort(400, description="Not a valid JSON")
+        return jsonify({"error": "Not a valid JSON"}), 400
 
     name = data.get("name")
+    description = data.get("description", None)
 
     if not name:
-        abort(400, description="name is required to create a category")
+        return jsonify({"error": "name is required to create a category"}), 400
 
-    existing = Category.query.filter_by(name=name)
+    existing = storage.get_by(Category, name=name, description=description)
     if existing:
         return jsonify({"error": "Category already exists"}), 409
 
     try:
         category = Category(name=name)
-        db.new(category)
-        db.save()
+        category.save()
+
         return jsonify({"message": "Category created successfully!"}), 201
     except Exception:
         abort(500)
 
-@app_views('/categories', methods=['GET'], strict_slashes=False)
+@app_views.route('/categories', methods=['GET'], strict_slashes=False)
 def get_all_categories():
     """ Retrieves all product categories """
     try:
-        categories = db.all(Category)
-        return jsonify([category.to_dict() for category in categories]), 200
+        categories = storage.all(Category)
+        return jsonify([category.to_dict() for category in categories.values()]), 200
     except Exception:
         abort(500)
 
 
-@app_views('/categories/<int:category_id>', methods=['GET'], strict_slashes=False)
+@app_views.route('/categories/<category_id>', methods=['GET'], strict_slashes=False)
 def get_category(category_id):
     """ Retrieves a category that matches the category ID """
-    try:
-        category = Category.query.filter_by(id=category_id).first()
-        return jsonify(category.to_dict()), 200
-    except Exception:
+    category = storage.get_by(Category, id=category_id)
+
+    if not category:
         abort(404)
+    
+    return jsonify(category.to_dict()), 200
 
 
-@app_views('/categories/<int:category_id>', methods=['PUT'], strict_slashes=False)
-def rename_category(category_id):
-    """ Renames an existing category """
+@app_views.route('/categories/<category_id>', methods=['PUT'], strict_slashes=False)
+def update_category(category_id):
+    """ Updates an existing category """
     data = request.get_json()
     if not data:
         abort(400, description="Not a valid JSON")
 
     name = data.get("name")
-    if not name:
-        abort(400, description="name attribute is required")
+    description = data.get("description")
 
-    try:
-        category = Category.query.filter_by(idcaegory_id).first()
-        category.name = name
-        db.save()
+    category = storage.get_by(Category, id=category_id)
+    
+    if category:
+        if name:
+            category.name = name
+        if description:
+            category.description = deescription
+        category.save()
+
         return jsonify({"message": "Category name updated successfully!"}), 200
-    except Exception:
+    else:
         abort(404)
+    
 
-
-@app_views('/categories/<int:category_id>', methods=['DELETE'],
-           strict_slashes=False)
+@app_views.route('/categories/<category_id>', methods=['DELETE'], strict_slashes=False)
 def delete_category(category_id):
     """ Deletes a category """
-    try:
-        category = Category.query.filter_by(id=category_id)
-        db.delete(category)
-        db.save()
-        return make_response('', 204)
-    except Exception:
+    category = storage.get_by(Category, id=category_id)
+    if not category:
         abort(404)
+
+    storage.delete(category)
+    storage.save()
+
+    return jsonify({"message": "Category removed successfully"}), 200
