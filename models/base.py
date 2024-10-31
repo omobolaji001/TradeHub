@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """ Base Model """
 import models
+import uuid
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, String, DateTime
 from datetime import datetime
@@ -36,11 +37,16 @@ class BaseModel:
             self.created_at = datetime.utcnow()
             self.updated_at = self.created_at
 
+    def __str__(self):
+        """String representation of the BaseModel class"""
+        return "[{:s}] ({:s}) {}".format(self.__class__.__name__, self.id,
+                                         self.__dict__)
+
     def save(self):
         """ updates 'updated_at' with the current datetime """
         self.updated_at = datetime.utcnow()
-        models.db.new(self)
-        models.db.save()
+        models.storage.new(self)
+        models.storage.save()
 
     def to_dict(self, save_fs=None):
         """returns a dictionary containing all keys/values of the instance"""
@@ -59,4 +65,4 @@ class BaseModel:
 
     def delete(self):
         """ Deletes the current instance from database """
-        models.db.delete(self)
+        models.storage.delete(self)
