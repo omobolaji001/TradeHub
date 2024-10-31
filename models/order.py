@@ -18,7 +18,7 @@ class Order(BaseModel, Base):
     status = Column(String(20), nullable=False, default="Pending")
 
 
-    shipment = relationship("Shipment", backref="order", uselist=False)
+    shipment = relationship("Shipment", backref="order")
     items = relationship("OrderItem", backref="order")
 
     def __init__(self, *args, **kwargs):
