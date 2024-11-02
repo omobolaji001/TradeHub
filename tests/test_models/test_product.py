@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-"""Test User for expected behavior and documentation"""
+"""Test Product for expected behavior and documentation"""
 from datetime import datetime
 import inspect
 import models
@@ -13,7 +13,7 @@ module_doc = models.base.__doc__
 
 
 class TestUserDocs(unittest.TestCase):
-    """Tests to check the documentation and style of User class"""
+    """Tests to check the documentation and style of Product class"""
     @classmethod
     def setUpClass(cls):
         """Set up for the doc tests"""
