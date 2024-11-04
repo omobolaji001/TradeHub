@@ -12,7 +12,7 @@ module_doc = models.base.__doc__
 Order = order.Order
 
 
-class TestUserDocs(unittest.TestCase):
+class TestOrderDocs(unittest.TestCase):
     """Tests to check the documentation and style of Order class"""
     @classmethod
     def setUpClass(cls):
