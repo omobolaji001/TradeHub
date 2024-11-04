@@ -26,7 +26,7 @@ class TestUserDocs(unittest.TestCase):
         self.assertTrue(len(order.__doc__) >= 1,
                         "order.py needs a docstring")
 
-    def test_product_class_docstring(self):
+    def test_order_class_docstring(self):
         """Test for the Order class docstring"""
         self.assertIsNot(Order.__doc__, None,
                          "Order class needs a docstring")
