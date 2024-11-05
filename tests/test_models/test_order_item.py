@@ -12,7 +12,7 @@ module_doc = models.base.__doc__
 OrderItem = order_item.OrderItem
 
 
-class TestUserDocs(unittest.TestCase):
+class TestOrderItemDocs(unittest.TestCase):
     """Tests to check the documentation and style of OrderItem class"""
     @classmethod
     def setUpClass(cls):
@@ -33,7 +33,7 @@ class TestUserDocs(unittest.TestCase):
         self.assertTrue(len(OrderItem.__doc__) >= 1,
                         "OrderItem class needs a docstring")
 
-    def test_order_func_docstrings(self):
+    def test_order_item_func_docstrings(self):
         """Test for the presence of docstrings in OrderItem methods"""
         for func in self.order_item_f:
             self.assertIsNot(func[1].__doc__, None,
@@ -76,7 +76,6 @@ class TestOrderItem(unittest.TestCase):
         item = OrderItem()
         self.assertTrue(hasattr(item, "price"))
         self.assertEqual(item.price, None)
-
 
     def test_to_dict_creates_dict(self):
         """test to_dict method creates a dictionary with proper attrs"""
