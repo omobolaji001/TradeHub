@@ -1,6 +1,6 @@
 # TradeHub
 
-**TradeHub** is an e-commerce platform where merchants can advertise their products, and customers can browse and purchase items. The platform is built using a Flask API for the backend, PostgreSQL for database management, and React for the frontend interface.
+**TradeHub** is an market-place platform where merchants can advertise their products, and customers can browse and purchase items. The platform is built using a Flask API for the backend, PostgreSQL for database management, and React for the frontend interface.
 
 ## Table of Contents
 
